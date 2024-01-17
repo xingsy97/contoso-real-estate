@@ -76,3 +76,14 @@ ul {
       height: 637px;
   }
   }
+
+
+// ::ng-deep .success-snackbar {
+//   background: rgb(92, 147, 92) !important;
+//   background: rgb(92, 147, 92) !important;
+// }
+
+.mat-mdc-snack-bar-container {
+  background-color: rgb(92, 147, 92) !important;
+  background: rgb(92, 147, 92) !important;
+}

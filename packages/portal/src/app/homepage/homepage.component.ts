@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { MatButtonModule } from "@angular/material/button";
 import { MatDividerModule } from "@angular/material/divider";
-import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
+import { MatSnackBar, MatSnackBarModule  } from '@angular/material/snack-bar';
 import { environment } from "../../environments/environment";
 import { CardListComponent } from "../shared/card-list/card-list.component";
 import { FavoriteService } from "../shared/favorite.service";
@@ -16,7 +16,7 @@ import { RealtimeService } from "../shared/realtime.service";
   templateUrl: "./homepage.component.html",
   styleUrls: ["./homepage.component.scss"],
   standalone: true,
-  imports: [CommonModule, CardListComponent, MatButtonModule, MatDividerModule, InfiniteScrollingDirective],
+  imports: [CommonModule, CardListComponent, MatButtonModule, MatDividerModule, InfiniteScrollingDirective, MatSnackBarModule],
 })
 export class HomepageComponent implements OnInit {
   featuredListings: Listing[] = [];
@@ -29,6 +29,16 @@ export class HomepageComponent implements OnInit {
   private userService = inject(UserService);
   private realtimeService = inject(RealtimeService);
 
+  constructor(private snackBar: MatSnackBar) { }
+
+  notify(message: string) {
+    this.snackBar.open(message, "Close", {
+      duration: 500000,
+      horizontalPosition: 'end',
+      verticalPosition: 'top',
+      // panelClass: ['success-snackbar']
+    });
+  }
 
   async ngOnInit() {
     this.user = await this.userService.currentUser();
@@ -39,8 +49,7 @@ export class HomepageComponent implements OnInit {
       const notifyMessage = this.user?.name?.length > 0
         ? `Hurry up! Another user has favorited the listing "${listingTitle}".`
         : `A user has favorited the listing "${listingTitle}".`;
-      alert(notifyMessage);
-      // _snackBar.open(, "Close", { duration: 2000, horizontalPosition: 'end', verticalPosition: 'top' });
+      this.notify(notifyMessage);
     });
 
     this.realtimeService.client.on("notifyCheckout", async (listing, from, to) => {
@@ -48,7 +57,7 @@ export class HomepageComponent implements OnInit {
       let notifyMessage = this.user?.name?.length > 0
         ? `Hurry up! Another user has booked the listing "${listing.title}" but didn't complete the payment.`
         : `A user has booked the listing "${listing}". but didn't complete the payment`;
-      alert(notifyMessage);
+      this.notify(notifyMessage);
 
       const favourites: Array<Listing> = await this.favoriteService.getFavoritesByUser(this.user) ?? [];
 
@@ -56,11 +65,10 @@ export class HomepageComponent implements OnInit {
         if (favour.id === listing.id) {
           notifyMessage =
           `"${favour.title}" in your favorites has been booked and it's no longer available between the dates ${from} ~ ${to}.`
-          alert(notifyMessage);
+          this.notify(notifyMessage);
           break;
         }
       }
-      // _snackBar.open(, "Close", { duration: 2000, horizontalPosition: 'end', verticalPosition: 'top' });
     });
   }
 
