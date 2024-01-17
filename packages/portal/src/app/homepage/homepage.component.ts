@@ -2,12 +2,14 @@ import { Component, OnInit, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { MatButtonModule } from "@angular/material/button";
 import { MatDividerModule } from "@angular/material/divider";
+import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { environment } from "../../environments/environment";
 import { CardListComponent } from "../shared/card-list/card-list.component";
 import { FavoriteService } from "../shared/favorite.service";
 import { InfiniteScrollingDirective } from "../shared/infinite-scrolling.directive";
 import { ListingService } from "../shared/listing.service";
 import { UserService } from "../shared/user/user.service";
+import { RealtimeService } from "../shared/realtime.service";
 
 @Component({
   selector: "app-homepage",
@@ -25,10 +27,41 @@ export class HomepageComponent implements OnInit {
   private listingService = inject(ListingService);
   private favoriteService = inject(FavoriteService);
   private userService = inject(UserService);
+  private realtimeService = inject(RealtimeService);
+
 
   async ngOnInit() {
     this.user = await this.userService.currentUser();
     this.featuredListings = await this.listingService.getFeaturedListings();
+
+    this.realtimeService.client.on("notifyFavourite", (listingTitle) => {
+      console.log(`should notify favourite ${listingTitle}`);
+      const notifyMessage = this.user?.name?.length > 0
+        ? `Hurry up! Another user has favorited the listing "${listingTitle}".`
+        : `A user has favorited the listing "${listingTitle}".`;
+      alert(notifyMessage);
+      // _snackBar.open(, "Close", { duration: 2000, horizontalPosition: 'end', verticalPosition: 'top' });
+    });
+
+    this.realtimeService.client.on("notifyCheckout", async (listing, from, to) => {
+      console.log(`should notify checkout`, listing, from, to);
+      let notifyMessage = this.user?.name?.length > 0
+        ? `Hurry up! Another user has booked the listing "${listing.title}" but didn't complete the payment.`
+        : `A user has booked the listing "${listing}". but didn't complete the payment`;
+      alert(notifyMessage);
+
+      const favourites: Array<Listing> = await this.favoriteService.getFavoritesByUser(this.user) ?? [];
+
+      for (const favour of favourites) {
+        if (favour.id === listing.id) {
+          notifyMessage =
+          `"${favour.title}" in your favorites has been booked and it's no longer available between the dates ${from} ~ ${to}.`
+          alert(notifyMessage);
+          break;
+        }
+      }
+      // _snackBar.open(, "Close", { duration: 2000, horizontalPosition: 'end', verticalPosition: 'top' });
+    });
   }
 
   async onFavoritedToggle(listing: Listing | null) {
