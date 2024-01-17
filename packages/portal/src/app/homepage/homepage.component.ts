@@ -33,10 +33,9 @@ export class HomepageComponent implements OnInit {
 
   notify(message: string) {
     this.snackBar.open(message, "Close", {
-      duration: 500000,
+      duration: 10000,
       horizontalPosition: 'end',
-      verticalPosition: 'top',
-      // panelClass: ['success-snackbar']
+      verticalPosition: 'top'
     });
   }
 
